@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     tf.logging.set_verbosity(tf.logging.ERROR)
 
-    parser.add_argument('--gpu_ids', type=str, default='7')
+    parser.add_argument('--gpu_ids', type=str, default='0')
 
     # training parameter
     parser.add_argument('--train_epochs', type=int, default=2)
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument('--loss_scale', type=float, default=2.0 ** 15)
     parser.add_argument('--warmup_rate', type=float, default=0.1)
     parser.add_argument('--loss_count', type=int, default=1000)
-    parser.add_argument('--seed', type=list, default=[123, 456, 789, 556, 977])
+    parser.add_argument('--seed', type=list, default=[123])
     parser.add_argument('--float16', type=int, default=True)  # only sm >= 7.0 (tensorcores)
     parser.add_argument('--max_ans_length', type=int, default=50)
     parser.add_argument('--log_interval', type=int, default=30)  # show the average loss per 30 steps args.
@@ -81,10 +81,10 @@ if __name__ == '__main__':
     parser.add_argument('--train_dir', type=str, default='outputs/cmrc2018/train_features_albert.json')
     parser.add_argument('--dev_dir1', type=str, default='outputs/cmrc2018/dev_examples_albert.json')
     parser.add_argument('--dev_dir2', type=str, default='outputs/cmrc2018/dev_features_albert.json')
-    #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
-    #parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
-    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
-    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/test_dev.json')
+    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
+    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
+    #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
+    #parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/test_dev.json')
     parser.add_argument('--bert_config_file', type=str,
                         default='../nlp_model/albert_zh_base/albert_config.json')
     parser.add_argument('--init_restore_dir', type=str,
