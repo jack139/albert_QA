@@ -27,7 +27,6 @@ import numpy as np
 import six
 from six.moves import range
 import tensorflow as tf
-#import ipdb
 
 def float32_variable_storage_getter(getter, name, shape=None, dtype=None,
                                     initializer=None, regularizer=None,
@@ -51,168 +50,94 @@ def get_custom_getter(compute_type):
 
 # define the dense layer
 
-try:
-    import blocksparse as bs
+
+def layer_norm_ops(x, g, b, axis=1, segments=1, epsilon=1e-6):
+    if axis < 0:
+        axis += len(x.shape)
+
+    K = x.shape[axis].value
+    assert g.shape.num_elements() == K
+    assert b.shape.num_elements() == K
+    assert K % segments == 0
+    assert axis != 0 or segments == 1, "Segments only implemented on axis=1 for now"
+    K //= segments
+
+    ys = list()
+    for s in range(segments):
+        segK = slice(s * K, s * K + K)
+        segX = [segK if d == axis else slice(None) for d in range(x.shape.ndims)]
+
+        mean, var = tf.nn.moments(x[segX], [axis], keep_dims=True)
+        norm = (x[segX] - mean) * tf.rsqrt(var + epsilon)
+        ys.append(norm * g[segK] + b[segK])
+
+    y = tf.concat(ys, axis) if segments > 1 else ys[0]
+
+    return y
 
 
-    def layer_norm(x, name='LayerNorm', epsilon=1e-5, relu=False):
-        """
-        normalize state vector to be zero mean / unit variance + learned scale/shift
-        """
-        n_state = x.shape[-1].value
-        with tf.variable_scope(name):
-            gain = tf.get_variable('gamma', [n_state], initializer=tf.constant_initializer(1.0))
-            bias = tf.get_variable('beta', [n_state], initializer=tf.constant_initializer(0.0))
-
-            return bs.layer_norm(x, gain, bias, axis=-1, epsilon=epsilon, relu=relu)
-
-
-    def dense(x, hidden_size, activation=None, name='dense', kernel_initializer=None, bias=True):
-        if kernel_initializer is None:
-            kernel_initializer = create_initializer(0.02)
-        with tf.variable_scope(name):
-            nx = x.shape[-1].value
-            ndims = x.shape.ndims
-            dtype = x.dtype
-
-            # Note: param initializers are not particularly well tuned in this code
-            w = tf.get_variable("kernel", [nx, hidden_size], initializer=kernel_initializer,
-                                dtype=dtype)
-
-            assert x.op.device != ''
-
-            if bias:
-                b = tf.get_variable("bias", [hidden_size], initializer=tf.zeros_initializer)
-            else:
-                b = 0
-
-            # merge context and batch dims for more efficient matmul
-            if ndims > 2:
-                y_shape = tf.concat([tf.shape(x)[: ndims - 1], [hidden_size]], axis=0)
-                x = tf.reshape(x, [-1, nx])
-
-            y = tf.matmul(x, w)
-
-            if activation == 'fast_gelu' or activation == 'gelu':
-                fast_gelu = True
-            else:
-                fast_gelu = False
-            if activation == 'relu':
-                relu = True
-            else:
-                relu = False
-            y = bs.bias_relu(y, b, relu=relu, fast_gelu=fast_gelu, atomics=False)
-
-            if activation == 'tanh':
-                y = tf.tanh(y)
-            elif activation == 'sigmoid':
-                y = tf.sigmoid(y)
-
-            if ndims > 2:
-                y = tf.reshape(y, y_shape)
-
-            return y
+def layer_norm(input_tensor, name='LayerNorm', epsilon=1e-5):
+    """
+    normalize state vector to be zero mean / unit variance + learned scale/shift
+    """
+    n_state = input_tensor.shape[-1].value
+    with tf.variable_scope(name):
+        gain = tf.get_variable('gamma', [n_state], initializer=tf.constant_initializer(1.0),
+                               dtype=input_tensor.dtype)
+        bias = tf.get_variable('beta', [n_state], initializer=tf.constant_initializer(0.0),
+                               dtype=input_tensor.dtype)
+        x = layer_norm_ops(input_tensor, gain, bias, axis=-1, epsilon=epsilon)
+        return x
 
 
-    def attention_softmax(qk_scores, scale):
-        return bs.softmax(qk_scores, scale)
+def dense(x, hidden_size, activation=None, name='dense', kernel_initializer=None, bias=True):
+    def gelu(x):
+        cdf = 0.5 * (1.0 + tf.tanh((np.sqrt(2 / np.pi) * (x + 0.044715 * tf.pow(x, 3)))))
+        return x * cdf
 
-except:
-    print('Please install blocksparse for faster training and lower gpu memory cost'
-          '(https://github.com/openai/blocksparse)!!!')
+    def fast_gelu(x):
+        return x * tf.nn.sigmoid(1.702 * x)
 
+    if kernel_initializer is None:
+        kernel_initializer = create_initializer(0.02)
+    with tf.variable_scope(name):
+        nx = x.shape[-1].value
+        ndims = x.shape.ndims
+        dtype = x.dtype
 
-    def layer_norm_ops(x, g, b, axis=1, segments=1, epsilon=1e-6):
-        if axis < 0:
-            axis += len(x.shape)
+        # Note: param initializers are not particularly well tuned in this code
+        w = tf.get_variable("kernel", [nx, hidden_size], initializer=kernel_initializer,
+                            dtype=dtype)
+        if bias:
+            b = tf.get_variable("bias", [hidden_size], initializer=tf.zeros_initializer, dtype=dtype)
+        else:
+            b = 0
 
-        K = x.shape[axis].value
-        assert g.shape.num_elements() == K
-        assert b.shape.num_elements() == K
-        assert K % segments == 0
-        assert axis != 0 or segments == 1, "Segments only implemented on axis=1 for now"
-        K //= segments
+        # merge context and batch dims for more efficient matmul
+        if ndims > 2:
+            y_shape = tf.concat([tf.shape(x)[: ndims - 1], [hidden_size]], axis=0)
+            x = tf.reshape(x, [-1, nx])
 
-        ys = list()
-        for s in range(segments):
-            segK = slice(s * K, s * K + K)
-            segX = [segK if d == axis else slice(None) for d in range(x.shape.ndims)]
+        y = tf.matmul(x, w)
 
-            mean, var = tf.nn.moments(x[segX], [axis], keep_dims=True)
-            norm = (x[segX] - mean) * tf.rsqrt(var + epsilon)
-            ys.append(norm * g[segK] + b[segK])
+        if bias:
+            y += b
 
-        y = tf.concat(ys, axis) if segments > 1 else ys[0]
+        if activation == 'tanh':
+            y = tf.tanh(y)
+        elif activation == 'sigmoid':
+            y = tf.sigmoid(y)
+        elif activation == 'relu':
+            y = tf.nn.relu(y)
+        elif activation == 'gelu':
+            y = gelu(y)
+        elif activation == 'fast_gelu':
+            y = fast_gelu(y)
+
+        if ndims > 2:
+            y = tf.reshape(y, y_shape)
 
         return y
-
-
-    def layer_norm(input_tensor, name='LayerNorm', epsilon=1e-5):
-        """
-        normalize state vector to be zero mean / unit variance + learned scale/shift
-        """
-        n_state = input_tensor.shape[-1].value
-        with tf.variable_scope(name):
-            gain = tf.get_variable('gamma', [n_state], initializer=tf.constant_initializer(1.0),
-                                   dtype=input_tensor.dtype)
-            bias = tf.get_variable('beta', [n_state], initializer=tf.constant_initializer(0.0),
-                                   dtype=input_tensor.dtype)
-            x = layer_norm_ops(input_tensor, gain, bias, axis=-1, epsilon=epsilon)
-            return x
-
-
-    def dense(x, hidden_size, activation=None, name='dense', kernel_initializer=None, bias=True):
-        def gelu(x):
-            cdf = 0.5 * (1.0 + tf.tanh((np.sqrt(2 / np.pi) * (x + 0.044715 * tf.pow(x, 3)))))
-            return x * cdf
-
-        def fast_gelu(x):
-            return x * tf.nn.sigmoid(1.702 * x)
-
-        if kernel_initializer is None:
-            kernel_initializer = create_initializer(0.02)
-        with tf.variable_scope(name):
-            nx = x.shape[-1].value
-            ndims = x.shape.ndims
-            dtype = x.dtype
-
-            # Note: param initializers are not particularly well tuned in this code
-            w = tf.get_variable("kernel", [nx, hidden_size], initializer=kernel_initializer,
-                                dtype=dtype)
-            if bias:
-                b = tf.get_variable("bias", [hidden_size], initializer=tf.zeros_initializer, dtype=dtype)
-            else:
-                b = 0
-
-            # merge context and batch dims for more efficient matmul
-            if ndims > 2:
-                y_shape = tf.concat([tf.shape(x)[: ndims - 1], [hidden_size]], axis=0)
-                x = tf.reshape(x, [-1, nx])
-
-            y = tf.matmul(x, w)
-
-            if bias:
-                y += b
-
-            if activation == 'tanh':
-                y = tf.tanh(y)
-            elif activation == 'sigmoid':
-                y = tf.sigmoid(y)
-            elif activation == 'relu':
-                y = tf.nn.relu(y)
-            elif activation == 'gelu':
-                y = gelu(y)
-            elif activation == 'fast_gelu':
-                y = fast_gelu(y)
-
-            if ndims > 2:
-                y = tf.reshape(y, y_shape)
-
-            return y
-
-
-    def attention_softmax(qk_scores, scale):
-        return tf.nn.softmax(qk_scores * scale, axis=-1)
 
 
 class AlbertConfig(object):
