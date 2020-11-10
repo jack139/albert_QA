@@ -7,7 +7,7 @@ v5 - special: Evaluate on SQuAD-style CMRC 2018 Datasets
 v5: formatted output, add usage description
 v4: fixed segmentation issues
 '''
-from __future__ import print_function
+
 from collections import OrderedDict
 import re
 import json

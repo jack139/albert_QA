@@ -5,14 +5,10 @@ import numpy as np
 import tensorflow as tf
 import os
 
-try:
-    # horovod must be import before optimizer!
-    import horovod.tensorflow as hvd
-except:
-    print('Please setup horovod before using multi-gpu!!!')
-    hvd = None
+# 'Please setup horovod before using multi-gpu!!!'
+hvd = None
 
-from models.tf_albert_zh_modeling import AlbertModelMRC, BertConfig
+from models.albert_zh_modeling import AlbertModelMRC, BertConfig
 from optimizations.tf_optimization import Optimizer
 import json
 import utils
@@ -102,20 +98,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_ids
     n_gpu = len(args.gpu_ids.split(','))
-    if n_gpu > 1:
-        assert hvd
-        hvd.init()
-        mpi_size = hvd.size()
-        mpi_rank = hvd.local_rank()
-        assert mpi_size == n_gpu
-        training_hooks = [hvd.BroadcastGlobalVariablesHook(0)]
-        print_rank0('GPU NUM', n_gpu)
-    else:
-        hvd = None
-        mpi_size = 1
-        mpi_rank = 0
-        training_hooks = None
-        print('GPU NUM', n_gpu)
+    hvd = None
+    mpi_size = 1
+    mpi_rank = 0
+    training_hooks = None
+    print('GPU NUM', n_gpu)
 
     args.checkpoint_dir += ('/epoch{}_batch{}_lr{}_warmup{}_anslen{}_tf/'
                             .format(args.train_epochs, args.n_batch, args.lr, args.warmup_rate, args.max_ans_length))

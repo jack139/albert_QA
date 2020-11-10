@@ -8,7 +8,7 @@ import os
 #Please setup horovod before using multi-gpu!!!
 hvd = None
 
-from models.albert_modeling import AlbertModelMRC, AlbertConfig
+from models.albert_google_modeling import AlbertModelMRC, AlbertConfig
 from optimizations.tf_optimization import Optimizer
 import json
 import utils
