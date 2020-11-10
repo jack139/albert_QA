@@ -13,5 +13,5 @@ tensorflow 1.15
 
 ### 模型及相关代码来源
 1. 官方Albert (https://github.com/google-research/albert)
-2. Bert中文finetune (https://github.com/ewrfcas/bert_cn_finetune)
-3. brightmart预训练 (https://github.com/brightmart/albert_zh)
+2. brightmart预训练 (https://github.com/brightmart/albert_zh)
+3. Bert中文finetune (https://github.com/ewrfcas/bert_cn_finetune)
