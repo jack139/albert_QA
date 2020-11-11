@@ -4,11 +4,12 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import os
+import sys
 
-#Please setup horovod before using multi-gpu!!!
+# 'Please setup horovod before using multi-gpu!!!'
 hvd = None
 
-from models.albert_modeling import AlbertModelMRC, AlbertConfig
+#from models.albert_zh_modeling import AlbertModelMRC, BertConfig
 from optimizations.tf_optimization import Optimizer
 import json
 import utils
@@ -54,6 +55,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     tf.logging.set_verbosity(tf.logging.ERROR)
 
+    parser.add_argument('--model', type=str, default='') # albert, albert_zh, albert_google
     parser.add_argument('--gpu_ids', type=str, default='0')
 
     # training parameter
@@ -76,26 +78,48 @@ if __name__ == '__main__':
     parser.add_argument('--max_seq_length', type=int, default=512)
 
     # data dir
-    parser.add_argument('--vocab_file', type=str, default='../nlp_model/albert_zh_base/vocab_chinese.txt')
-
     parser.add_argument('--train_dir', type=str, default='outputs/cmrc2018/train_features_albert.json')
     parser.add_argument('--dev_dir1', type=str, default='outputs/cmrc2018/dev_examples_albert.json')
     parser.add_argument('--dev_dir2', type=str, default='outputs/cmrc2018/dev_features_albert.json')
-    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
-    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
-    #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
-    #parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/test_dev.json')
-    parser.add_argument('--bert_config_file', type=str,
-                        default='../nlp_model/albert_zh_base/albert_config.json')
-    parser.add_argument('--init_restore_dir', type=str,
-                        default='../nlp_model/albert_zh_base/model.ckpt-best')
-    parser.add_argument('--checkpoint_dir', type=str,
-                        default='outputs/cmrc2018/albert_zh_base/')
+    #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
+    #parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
+    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
+    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/test_dev.json')
+    parser.add_argument('--vocab_file', type=str, default='')
+    parser.add_argument('--bert_config_file', type=str, default='')
+    parser.add_argument('--init_restore_dir', type=str, default='')
+    parser.add_argument('--checkpoint_dir', type=str, default='')
     parser.add_argument('--setting_file', type=str, default='setting.txt')
     parser.add_argument('--log_file', type=str, default='log.txt')
 
     # use some global vars for convenience
     args = parser.parse_args()
+
+    # 设置模型相关参数，如果未设置的话
+    if args.model == 'albert_zh':
+        from models.albert_zh_modeling import AlbertModelMRC
+        from models.albert_zh_modeling import BertConfig as AlbertConfig
+        model_name = 'albert_tiny_489k'
+        model_path = '../nlp_model/%s/'%model_name
+        args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab.txt'
+        args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config_tiny.json'
+        args.init_restore_dir = args.init_restore_dir if args.init_restore_dir else model_path+'albert_model.ckpt'
+    elif args.model in ['albert', 'albert_google']:
+        if args.model == 'albert':  
+            from models.albert_modeling import AlbertModelMRC, AlbertConfig
+        else:
+            from models.albert_google_modeling import AlbertModelMRC, AlbertConfig    
+        model_name = 'albert_zh_base'
+        model_path = '../nlp_model/%s/'%model_name
+        args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab_chinese.txt'
+        args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config.json'
+        args.init_restore_dir = args.init_restore_dir if args.init_restore_dir else model_path+'model.ckpt-best'
+    else:
+        print("UNKNOWN model name: [", args.model, "]. Available mode: ablert, albert_zh, albert_google.")
+        sys.exit(0)
+
+    args.checkpoint_dir = args.checkpoint_dir if args.checkpoint_dir else 'outputs/cmrc2018/%s'%model_name
+
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_ids
     n_gpu = len(args.gpu_ids.split(','))
     hvd = None
@@ -126,17 +150,6 @@ if __name__ == '__main__':
     if mpi_rank == 0:
         if os.path.exists(args.log_file):
             os.remove(args.log_file)
-
-    # split_data for multi_gpu
-    if n_gpu > 1:
-        np.random.seed(np.sum(args.seed))
-        np.random.shuffle(train_data)
-        data_split_start = int(len(train_data) * (mpi_rank / mpi_size))
-        data_split_end = int(len(train_data) * ((mpi_rank + 1) / mpi_size))
-        train_data = train_data[data_split_start:data_split_end]
-        args.n_batch = args.n_batch // n_gpu
-        print('#### Hvd rank', mpi_rank, 'train from', data_split_start,
-              'to', data_split_end, 'Data length', len(train_data))
 
     steps_per_epoch = len(train_data) // args.n_batch
     eval_steps = int(steps_per_epoch * args.eval_epochs)
