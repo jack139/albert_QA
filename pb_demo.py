@@ -30,7 +30,7 @@ question = question.replace('”', '"').replace('“', '"')
 
 import tokenizations.official_tokenization as tokenization
 
-tokenizer = tokenization.BertTokenizer(vocab_file='check_points/pretrain_models/roberta_wwm_ext_large/vocab.txt',
+tokenizer = tokenization.BertTokenizer(vocab_file='../nlp_model/albert_tiny_489k/vocab.txt',
                                        do_lower_case=True)
 
 question_tokens = tokenizer.tokenize(question)

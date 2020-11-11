@@ -9,7 +9,6 @@ import sys
 # 'Please setup horovod before using multi-gpu!!!'
 hvd = None
 
-#from models.albert_zh_modeling import AlbertModelMRC, BertConfig
 from optimizations.tf_optimization import Optimizer
 import json
 import utils
