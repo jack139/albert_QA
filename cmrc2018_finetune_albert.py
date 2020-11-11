@@ -80,10 +80,10 @@ if __name__ == '__main__':
     parser.add_argument('--train_dir', type=str, default='outputs/cmrc2018/train_features_albert.json')
     parser.add_argument('--dev_dir1', type=str, default='outputs/cmrc2018/dev_examples_albert.json')
     parser.add_argument('--dev_dir2', type=str, default='outputs/cmrc2018/dev_features_albert.json')
-    #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
-    #parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
-    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
-    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/test_dev.json')
+    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
+    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
+    #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
+    #parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/test_dev.json')
     parser.add_argument('--vocab_file', type=str, default='')
     parser.add_argument('--bert_config_file', type=str, default='')
     parser.add_argument('--init_restore_dir', type=str, default='')
@@ -99,6 +99,7 @@ if __name__ == '__main__':
         from models.albert_zh_modeling import AlbertModelMRC
         from models.albert_zh_modeling import BertConfig as AlbertConfig
         model_name = 'albert_tiny_489k'
+        #model_name = 'albert_large_zh'
         model_path = '../nlp_model/%s/'%model_name
         args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab.txt'
         args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config_tiny.json'
