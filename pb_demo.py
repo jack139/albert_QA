@@ -1,6 +1,9 @@
 # coding=utf-8
 
+import numpy as np
 import tensorflow as tf
+import tokenizations.official_tokenization as tokenization
+
 
 with tf.gfile.FastGFile('model.pb', 'rb') as f:
     intput_graph_def = tf.GraphDef()
@@ -40,7 +43,7 @@ questions = [
 ]
 questions = [i.replace('”', '"').replace('“', '"') for i in questions]
 
-import tokenizations.official_tokenization as tokenization
+
 
 tokenizer = tokenization.BertTokenizer(vocab_file='../nlp_model/albert_zh_base/vocab_chinese.txt',
                                        do_lower_case=True)
@@ -58,8 +61,6 @@ for question in questions:
         input_ids_.append(0)
         segment_ids_.append(0)
         input_mask_.append(0)
-
-    import numpy as np
 
     input_ids_ = np.array(input_ids_).reshape(1, max_seq_length)
     segment_ids_ = np.array(segment_ids_).reshape(1, max_seq_length)
