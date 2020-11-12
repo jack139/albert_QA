@@ -14,6 +14,12 @@
 # limitations under the License.
 """Functions and classes related to optimization (weight updates)."""
 
+import os
+# 启用AMP, Volta以下显卡，需要设置环境变量 TF_AUTO_MIXED_PRECISION_GRAPH_REWRITE_IGNORE_PERFORMANCE=1
+# 原因来自：https://devtalk.nvidia.com/default/topic/1052688/container-tensorflow/
+#               issue-about-no-suitable-gpus-detected-when-using-mixed-precision-graph-optimizer/
+os.environ['TF_AUTO_MIXED_PRECISION_GRAPH_REWRITE_IGNORE_PERFORMANCE'] = '1'
+
 import re
 import tensorflow as tf
 
@@ -66,6 +72,10 @@ class Optimizer(object):
             beta_2=beta2,
             epsilon=1e-6,
             exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
+
+        # 启用AMP，需要有tensor core的Nvidia显卡
+        # https://developer.nvidia.com/automatic-mixed-precision
+        optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
 
         if hvd is not None:
             from horovod.tensorflow.compression import Compression

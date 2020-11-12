@@ -13,7 +13,7 @@ tensorflow 1.15
 
 ### 训练
 ```
-python3 cmrc2018_finetune_albert.py --model albert_google --n_batch 16
+python3 cmrc2018_finetune_albert.py --model albert_google --max_seq_length 256 --n_batch 32
 ```
 
 ### 模型测试
@@ -26,4 +26,3 @@ python3 pb_demo.py
 1. 官方Albert (https://github.com/google-research/albert)
 2. brightmart预训练 (https://github.com/brightmart/albert_zh)
 3. Bert中文finetune (https://github.com/ewrfcas/bert_cn_finetune)
-
