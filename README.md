@@ -11,10 +11,15 @@ CMRC 2018：篇章片段抽取型阅读理解（简体中文）
 python 3.6
 tensorflow 1.15
 
-### 测试
+### 训练
 ```
 python3 cmrc2018_finetune_albert.py --model albert_google --n_batch 16
-python3 cmrc2018_finetune_albert.py --model albert_zh --n_batch 3
+```
+
+### 模型测试
+```
+python3 convert_tf_to_pb.py
+python3 pb_demo.py
 ```
 
 ### 模型及相关代码来源

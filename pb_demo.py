@@ -7,30 +7,36 @@ with tf.gfile.FastGFile('model.pb', 'rb') as f:
     intput_graph_def.ParseFromString(f.read())
     with tf.Graph().as_default() as p_graph:
         tf.import_graph_def(intput_graph_def)
+        # 去掉模型中GPU信息，用于使用模型在CPU上预测
+        g = tf.get_default_graph() 
+        ops = g.get_operations() 
+        for op in ops: 
+            op._set_device('/device:CPU:*')
 
 input_ids = p_graph.get_tensor_by_name("import/input_ids:0")
 input_mask = p_graph.get_tensor_by_name('import/input_mask:0')
 segment_ids = p_graph.get_tensor_by_name('import/segment_ids:0')
-start_logits = p_graph.get_tensor_by_name('import/start_logits:0')
-end_logits = p_graph.get_tensor_by_name('import/end_logits:0')
+start_logits = p_graph.get_tensor_by_name('import/finetune_mrc/Squeeze:0')
+end_logits = p_graph.get_tensor_by_name('import/finetune_mrc/Squeeze_1:0')
 
-context = "《战国无双3》是由光荣和ω-force开发的战国无双系列的正统第三续作。本作以三大故事为主轴，\
-分别是以武田信玄等人为主的《关东三国志》，织田信长等人为主的《战国三杰》，石田三成等人为主的《关原的年轻武者》，\
-丰富游戏内的剧情。此部份专门介绍角色，欲知武器情报、奥义字或擅长攻击类型等，请至战国无双系列1.由于乡里大辅先生因故去世，\
-不得不寻找其他声优接手。从猛将传 and Z开始。2.战国无双 编年史的原创男女主角亦有专属声优。\
-此模式是任天堂游戏谜之村雨城改编的新增模式。本作中共有20张战场地图（不含村雨城），\
-后来发行的猛将传再新增3张战场地图。但游戏内战役数量繁多，部分地图会有兼用的状况，\
-战役虚实则是以光荣发行的2本「战国无双3 人物真书」内容为主，以下是相关介绍。\
-（注：前方加☆者为猛将传新增关卡及地图。）合并本篇和猛将传的内容，村雨城模式剔除\
-，战国史模式可直接游玩。主打两大模式「战史演武」&「争霸演武」。系列作品外传作品"
+
+context = "易惠科技基于易联众集团的业务基础与技术沉淀，持续拓展和完善服 \
+务网络，目前在北京市设有研发中心和分支机构，在福州市、安徽省和山 \
+西省设有3家分子公司。公司团队成员在医疗健康信息化方面拥有多年的 \
+行业积淀，具备国内领先的项目实施、运营管理服务经验和能力。 \
+目前，公司在医疗健康信息化领域已服务了16个省份，300+个医疗机 \
+构，承建的项目成功帮助客户多次获评国家级、省级优秀案例和创新项目 \
+奖项。我们将秉承“专业、创新、满意”的服务理念持续发力，为客户量 \
+身打造可持续的解决方案和全方位的运营服务。"
+
 context = context.replace('”', '"').replace('“', '"')
 
-question = "《战国无双3》是由哪两个公司合作开发的？"
+question = "易惠科技的服务理念是什么？"
 question = question.replace('”', '"').replace('“', '"')
 
 import tokenizations.official_tokenization as tokenization
 
-tokenizer = tokenization.BertTokenizer(vocab_file='../nlp_model/albert_tiny_489k/vocab.txt',
+tokenizer = tokenization.BertTokenizer(vocab_file='../nlp_model/albert_zh_base/vocab_chinese.txt',
                                        do_lower_case=True)
 
 question_tokens = tokenizer.tokenize(question)
