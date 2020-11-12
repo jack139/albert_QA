@@ -19,6 +19,7 @@ segment_ids = p_graph.get_tensor_by_name('import/segment_ids:0')
 start_logits = p_graph.get_tensor_by_name('import/finetune_mrc/Squeeze:0')
 end_logits = p_graph.get_tensor_by_name('import/finetune_mrc/Squeeze_1:0')
 
+max_seq_length = 512
 
 context = "易惠科技基于易联众集团的业务基础与技术沉淀，持续拓展和完善服 \
 务网络，目前在北京市设有研发中心和分支机构，在福州市、安徽省和山 \
@@ -53,16 +54,16 @@ for question in questions:
     segment_ids_ = [0] * (2 + len(question_tokens)) + [1] * (1 + len(context_tokens))
     input_mask_ = [1] * len(input_tokens)
 
-    while len(input_ids_) < 512:
+    while len(input_ids_) < max_seq_length:
         input_ids_.append(0)
         segment_ids_.append(0)
         input_mask_.append(0)
 
     import numpy as np
 
-    input_ids_ = np.array(input_ids_).reshape(1, 512)
-    segment_ids_ = np.array(segment_ids_).reshape(1, 512)
-    input_mask_ = np.array(input_mask_).reshape(1, 512)
+    input_ids_ = np.array(input_ids_).reshape(1, max_seq_length)
+    segment_ids_ = np.array(segment_ids_).reshape(1, max_seq_length)
+    input_mask_ = np.array(input_mask_).reshape(1, max_seq_length)
 
     with tf.Session(graph=p_graph) as sess:
         start_logits_, end_logits_ = sess.run([start_logits, end_logits], feed_dict={input_ids: input_ids_,

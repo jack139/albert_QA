@@ -77,9 +77,9 @@ if __name__ == '__main__':
     parser.add_argument('--max_seq_length', type=int, default=512)
 
     # data dir
-    parser.add_argument('--train_dir', type=str, default='outputs/cmrc2018/train_features_albert.json')
-    parser.add_argument('--dev_dir1', type=str, default='outputs/cmrc2018/dev_examples_albert.json')
-    parser.add_argument('--dev_dir2', type=str, default='outputs/cmrc2018/dev_features_albert.json')
+    parser.add_argument('--train_dir', type=str, default='outputs/cmrc2018/data/train_features_albert.json')
+    parser.add_argument('--dev_dir1', type=str, default='outputs/cmrc2018/data/dev_examples_albert.json')
+    parser.add_argument('--dev_dir2', type=str, default='outputs/cmrc2018/data/dev_features_albert.json')
     parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
     parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
     #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
@@ -137,11 +137,12 @@ if __name__ == '__main__':
         tokenizer = BertTokenizer(vocab_file=args.vocab_file, do_lower_case=True)
         # assert args.vocab_size == len(tokenizer.vocab)
         if not os.path.exists(args.train_dir):
-            json2features(args.train_file, [args.train_dir.replace('_features_', '_examples_'),
-                                            args.train_dir], tokenizer, is_training=True)
+            json2features(args.train_file, [args.train_dir.replace('_features_', '_examples_'), args.train_dir], 
+                tokenizer, is_training=True, max_seq_length=args.max_seq_length)
 
         if not os.path.exists(args.dev_dir1) or not os.path.exists(args.dev_dir2):
-            json2features(args.dev_file, [args.dev_dir1, args.dev_dir2], tokenizer, is_training=False)
+            json2features(args.dev_file, [args.dev_dir1, args.dev_dir2], 
+                tokenizer, is_training=False, max_seq_length=args.max_seq_length)
 
     train_data = json.load(open(args.train_dir, 'r'))
     dev_examples = json.load(open(args.dev_dir1, 'r'))
