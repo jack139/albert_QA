@@ -73,10 +73,6 @@ class Optimizer(object):
             epsilon=1e-6,
             exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
 
-        # 启用AMP，需要有tensor core的Nvidia显卡
-        # https://developer.nvidia.com/automatic-mixed-precision
-        optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
-
         if hvd is not None:
             from horovod.tensorflow.compression import Compression
             optimizer = hvd.DistributedOptimizer(optimizer, sparse_as_dense=True,
@@ -89,6 +85,12 @@ class Optimizer(object):
                 decr_ratio=0.5)
             optimizer = tf.contrib.mixed_precision.LossScaleOptimizer(optimizer, loss_scale_manager)
             self.loss_scale = loss_scale_manager.get_loss_scale()
+
+
+        # 启用AMP，需要有tensor core的Nvidia显卡
+        # https://developer.nvidia.com/automatic-mixed-precision
+        optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
+
 
         tvars = tf.trainable_variables()
         grads_and_vars = optimizer.compute_gradients(loss, tvars)
