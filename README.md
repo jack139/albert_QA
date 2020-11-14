@@ -13,7 +13,7 @@ tensorflow 1.15
 
 ### 训练
 ```
-python3 cmrc2018_finetune_albert.py --model albert_google --max_seq_length 256 --n_batch 32
+python3 cmrc2018_finetune_albert.py --model albert_google --max_seq_length 512 --n_batch 16
 ```
 
 ### 模型测试

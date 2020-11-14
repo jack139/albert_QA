@@ -27,7 +27,7 @@ import tensorflow as tf
 class Optimizer(object):
     def __init__(self, loss, init_lr, num_train_steps, num_warmup_steps,
                  hvd=None, use_fp16=False, loss_count=1000, clip_norm=1.0,
-                 init_loss_scale=2 ** 16, beta1=0.9, beta2=0.999):
+                 beta1=0.9, beta2=0.999):
         """Creates an optimizer training op."""
         self.global_step = tf.train.get_or_create_global_step()
 
@@ -73,23 +73,10 @@ class Optimizer(object):
             epsilon=1e-6,
             exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
 
-        if hvd is not None:
-            from horovod.tensorflow.compression import Compression
-            optimizer = hvd.DistributedOptimizer(optimizer, sparse_as_dense=True,
-                                                 compression=Compression.fp16 if use_fp16 else Compression.none)
         if use_fp16:
-            loss_scale_manager = tf.contrib.mixed_precision.ExponentialUpdateLossScaleManager(
-                init_loss_scale=init_loss_scale,
-                incr_every_n_steps=loss_count,
-                decr_every_n_nan_or_inf=2,
-                decr_ratio=0.5)
-            optimizer = tf.contrib.mixed_precision.LossScaleOptimizer(optimizer, loss_scale_manager)
-            self.loss_scale = loss_scale_manager.get_loss_scale()
-
-
-        # 启用AMP，需要有tensor core的Nvidia显卡
-        # https://developer.nvidia.com/automatic-mixed-precision
-        optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
+            # 启用AMP，需要有tensor core的Nvidia显卡
+            # https://developer.nvidia.com/automatic-mixed-precision
+            optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
 
 
         tvars = tf.trainable_variables()

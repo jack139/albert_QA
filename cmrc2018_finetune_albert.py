@@ -53,6 +53,13 @@ def data_generator(data, n_batch, shuffle=False, drop_last=False):
         for i in range(steps_per_epoch):
             yield {k: data_set[k][index_all[i * n_batch:(i + 1) * n_batch]] for k in data_set}
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Unsupported value encountered.')
 
 if __name__ == '__main__':
 
@@ -68,16 +75,15 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=3e-5)
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--clip_norm', type=float, default=1.0)
-    parser.add_argument('--loss_scale', type=float, default=2.0 ** 15)
     parser.add_argument('--warmup_rate', type=float, default=0.1)
     parser.add_argument('--loss_count', type=int, default=1000)
     parser.add_argument('--seed', type=list, default=[123])
-    parser.add_argument('--float16', type=int, default=True)  # only sm >= 7.0 (tensorcores)
+    parser.add_argument('--float16', type=str2bool, nargs='?', const=True, default='True')  # only sm >= 7.0 (tensorcores)
     parser.add_argument('--max_ans_length', type=int, default=50)
     parser.add_argument('--log_interval', type=int, default=30)  # show the average loss per 30 steps args.
     parser.add_argument('--n_best', type=int, default=20)
     parser.add_argument('--eval_epochs', type=float, default=0.5)
-    parser.add_argument('--save_best', type=bool, default=True)
+    parser.add_argument('--save_best', type=str2bool, nargs='?', const=True, default='True')
     parser.add_argument('--vocab_size', type=int, default=21128)
     parser.add_argument('--max_seq_length', type=int, default=512)
 
@@ -98,16 +104,17 @@ if __name__ == '__main__':
 
     # use some global vars for convenience
     args = parser.parse_args()
-
+    print(args.float16)
     # 设置模型相关参数，如果未设置的话
     if args.model == 'albert_zh':
         from models.albert_zh_modeling import AlbertModelMRC
         from models.albert_zh_modeling import BertConfig as AlbertConfig
-        model_name = 'albert_tiny_489k'
+        #model_name = 'albert_tiny_489k'
+        model_name = 'albert_base_zh_36k'
         #model_name = 'albert_large_zh'
         model_path = '../nlp_model/%s/'%model_name
         args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab.txt'
-        args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config_tiny.json'
+        args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config_base.json'
         args.init_restore_dir = args.init_restore_dir if args.init_restore_dir else model_path+'albert_model.ckpt'
     elif args.model in ['albert', 'albert_google']:
         if args.model == 'albert':  
@@ -207,8 +214,7 @@ if __name__ == '__main__':
                              hvd=hvd,
                              use_fp16=args.float16,
                              loss_count=args.loss_count,
-                             clip_norm=args.clip_norm,
-                             init_loss_scale=args.loss_scale)
+                             clip_norm=args.clip_norm)
 
     if mpi_rank == 0:
         saver = tf.train.Saver(var_list=tf.trainable_variables(), max_to_keep=1)
@@ -258,9 +264,8 @@ if __name__ == '__main__':
                                      segment_ids: batch_data['segment_ids'],
                                      start_positions: batch_data['start_position'],
                                      end_positions: batch_data['end_position']}
-                        loss, _, global_steps, loss_scale = sess.run(
-                            [train_model.train_loss, optimization.train_op, optimization.global_step,
-                             optimization.loss_scale],
+                        loss, _, global_steps = sess.run(
+                            [train_model.train_loss, optimization.train_op, optimization.global_step],
                             feed_dict=feed_data)
                         if global_steps > old_global_steps:
                             old_global_steps = global_steps
@@ -269,7 +274,7 @@ if __name__ == '__main__':
                             pbar.update(1)
                             iteration += 1
                         else:
-                            print_rank0('NAN loss in', iteration, ', Loss scale reduce to', loss_scale)
+                            print_rank0('NAN loss in', iteration, ', Loss scale reduced', )
 
                         if global_steps % eval_steps == 0 and global_steps > 1:
                             print_rank0('Evaluating...')
