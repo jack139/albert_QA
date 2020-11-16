@@ -29,9 +29,5 @@ class CORPUS_RANK(object):
     def get_document(self, query):
         tokenized_query = tokenization(query)
         doc_scores = list(self.bm25.get_scores(tokenized_query))
-        print(doc_scores)
-        if sum(doc_scores)==0:
-            return None
-        else:
-            max_index = doc_scores.index(max(doc_scores))
-            return max_index
+        #print(doc_scores)
+        return sorted(enumerate(doc_scores), key=lambda item: item[1], reverse=True)

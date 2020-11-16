@@ -67,38 +67,47 @@ with tf.Session(graph=p_graph) as sess:
         print('\n################## ')
         # BM25 获取相关文本
         max_index = corpus_rank.get_document(question)
-        if max_index is None:
-            print('Question: ', question, '\n ---> 未找到答案')
-            continue
 
         print(max_index)
-        context = corpus[max_index]
 
-        context = context.replace('”', '"').replace('“', '"')
-        question = question.replace('”', '"').replace('“', '"')
+        for index, value in max_index:
+            if value==0: # bm25 score是0
+                print('Question: ', question, '\n ---> 未找到答案')
+                break
 
-        # 进行问答预测
-        question_tokens = tokenizer.tokenize(question)
-        context_tokens = tokenizer.tokenize(context)
-        input_tokens = ['[CLS]'] + question_tokens + ['[SEP]'] + context_tokens + ['[SEP]']
-        print(len(input_tokens))
-        input_ids_ = tokenizer.convert_tokens_to_ids(input_tokens)
-        segment_ids_ = [0] * (2 + len(question_tokens)) + [1] * (1 + len(context_tokens))
-        input_mask_ = [1] * len(input_tokens)
+            print(index)
+            context = corpus[index]
 
-        while len(input_ids_) < max_seq_length:
-            input_ids_.append(0)
-            segment_ids_.append(0)
-            input_mask_.append(0)
+            context = context.replace('”', '"').replace('“', '"')
+            question = question.replace('”', '"').replace('“', '"')
 
-        input_ids_ = np.array(input_ids_).reshape(1, max_seq_length)
-        segment_ids_ = np.array(segment_ids_).reshape(1, max_seq_length)
-        input_mask_ = np.array(input_mask_).reshape(1, max_seq_length)
+            # 进行问答预测
+            question_tokens = tokenizer.tokenize(question)
+            context_tokens = tokenizer.tokenize(context)
+            input_tokens = ['[CLS]'] + question_tokens + ['[SEP]'] + context_tokens + ['[SEP]']
+            print(len(input_tokens))
+            input_ids_ = tokenizer.convert_tokens_to_ids(input_tokens)
+            segment_ids_ = [0] * (2 + len(question_tokens)) + [1] * (1 + len(context_tokens))
+            input_mask_ = [1] * len(input_tokens)
 
-        start_logits_, end_logits_ = sess.run([start_logits, end_logits], feed_dict={input_ids: input_ids_,
-                                                                                     segment_ids: segment_ids_,
-                                                                                     input_mask: input_mask_})
-        st = np.argmax(start_logits_[0, :])
-        ed = np.argmax(end_logits_[0, :])
-        print('Question: ', question)
-        print('Answer:', "".join(input_tokens[st:ed + 1]))
+            while len(input_ids_) < max_seq_length:
+                input_ids_.append(0)
+                segment_ids_.append(0)
+                input_mask_.append(0)
+
+            input_ids_ = np.array(input_ids_).reshape(1, max_seq_length)
+            segment_ids_ = np.array(segment_ids_).reshape(1, max_seq_length)
+            input_mask_ = np.array(input_mask_).reshape(1, max_seq_length)
+
+            start_logits_, end_logits_ = sess.run([start_logits, end_logits], feed_dict={input_ids: input_ids_,
+                                                                                         segment_ids: segment_ids_,
+                                                                                         input_mask: input_mask_})
+            st = np.argmax(start_logits_[0, :])
+            ed = np.argmax(end_logits_[0, :])
+
+            ans = "".join(input_tokens[st:ed + 1])
+
+            if ans!='[CLS]': # 找到答案
+                print('Question: ', question)
+                print('Answer:', ans)
+                break
