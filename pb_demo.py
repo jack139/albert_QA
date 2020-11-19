@@ -44,12 +44,12 @@ corpus = [ # 至少要有3条
 ]
 
 questions = [
-    "易惠科技的服务理念是什么？",
-    "易惠科技有几家分公司？",
-    "易惠科技有哪几家分公司？",
-    "什么是深度学习？",
+    #"易惠科技的服务理念是什么？",
+    #"易惠科技有几家分公司？",
+    #"易惠科技有哪几家分公司？",
+    #"什么是深度学习？",
     "深度学习的优点是什么？",
-    "你是谁？"
+    #"你是谁？"
 ]
 
 # 装入Albert模型标签
@@ -98,6 +98,10 @@ with tf.Session(graph=p_graph) as sess:
             input_ids_ = np.array(input_ids_).reshape(1, max_seq_length)
             segment_ids_ = np.array(segment_ids_).reshape(1, max_seq_length)
             input_mask_ = np.array(input_mask_).reshape(1, max_seq_length)
+
+            print(input_ids_)
+            print(segment_ids_)
+            print(input_mask_)
 
             start_logits_, end_logits_ = sess.run([start_logits, end_logits], feed_dict={input_ids: input_ids_,
                                                                                          segment_ids: segment_ids_,

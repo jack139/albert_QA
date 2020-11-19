@@ -31,10 +31,17 @@ config.gpu_options.allow_growth = True
 
 with tf.Session(config=config) as sess:
     sess.run(tf.global_variables_initializer())
+
+    # 输出 pb
     with tf.gfile.FastGFile('model.pb', 'wb') as f:
         graph_def = sess.graph.as_graph_def()
         output_nodes = ['finetune_mrc/Squeeze', 'finetune_mrc/Squeeze_1']
-        #output_nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
         print('outputs:', output_nodes)
+        #print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node])) # 所有层的名字
         output_graph_def = graph_util.convert_variables_to_constants(sess, graph_def, output_nodes)
         f.write(output_graph_def.SerializeToString())
+
+    # save_model 输出 , for goland 测试
+    #builder = tf.saved_model.builder.SavedModelBuilder("outputs/saved-model")
+    #builder.add_meta_graph_and_variables(sess, [tf.saved_model.tag_constants.TRAINING], clear_devices=True)
+    #builder.save()  
