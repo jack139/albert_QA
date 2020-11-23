@@ -123,7 +123,7 @@ with tf.Session(graph=p_graph) as sess:
             # 不处理：
             ans = "".join(input_tokens[st:ed + 1])  
 
-            if ans!='[CLS]': # 找到答案
+            if not ans.startswith('[CLS]'): # 找到答案
                 print('Question: ', question)
                 print('Answer:', ans)
                 break
