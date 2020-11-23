@@ -40,7 +40,7 @@ corpus = [ # 至少要有3条
 的层数和层的规模可用于不同程度的抽象。深度学习运用了这分层次抽象的思想，更高层次的概念从低层次的概念学习得到。\
 这一分层结构常常使用贪心算法逐层构建而成，并从中选取有助于机器学习的更有效的特征。不少深度学习算法都以无监督\
 学习的形式出现，因而这些算法能被应用于其他算法无法企及的无标签数据，这一类数据比有标签数据更丰富，也更容易获\
-得。这一点也为深度学习赢得了重要的优势。"
+得。这一点也为深度学习赢得了重要的优势。",
 ]
 
 questions = [
@@ -108,8 +108,20 @@ with tf.Session(graph=p_graph) as sess:
                                                                                          input_mask: input_mask_})
             st = np.argmax(start_logits_[0, :])
             ed = np.argmax(end_logits_[0, :])
+            print(st, ed)
 
-            ans = "".join(input_tokens[st:ed + 1])
+            '''
+            # 判断一个unicode是否是英文字母
+            def is_alphabet(uchar):
+                if (uchar >= u'\u0041' and uchar <= u'\u005a') or (uchar >= u'\u0061' and uchar <= u'\u007a'):
+                    return True
+                else:
+                    return False
+            # 处理token中的英文，例如： 'di', '##st', '##ri', '##bu', '##ted', 're', '##pr', '##ese', '##nt', '##ation',
+            ans = "".join([i[2:] if i.startswith('##') else (' '+i if is_alphabet(i[0]) else i)  for i in input_tokens[st:ed + 1]])
+            '''
+            # 不处理：
+            ans = "".join(input_tokens[st:ed + 1])  
 
             if ans!='[CLS]': # 找到答案
                 print('Question: ', question)
