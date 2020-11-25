@@ -123,11 +123,12 @@ if __name__ == '__main__':
         tokenizer = BertTokenizer(vocab_file=args.vocab_file, do_lower_case=True)
         # assert args.vocab_size == len(tokenizer.vocab)
         if not os.path.exists(args.train_dir):
-            json2features(args.train_file, [args.train_dir.replace('_features_', '_examples_'),
-                                            args.train_dir], tokenizer, is_training=True)
+            json2features(args.train_file, [args.train_dir.replace('_features_', '_examples_'), args.train_dir], 
+                tokenizer, is_training=True, max_seq_length=args.max_seq_length)
 
         if not os.path.exists(args.dev_dir1) or not os.path.exists(args.dev_dir2):
-            json2features(args.dev_file, [args.dev_dir1, args.dev_dir2], tokenizer, is_training=False)
+            json2features(args.dev_file, [args.dev_dir1, args.dev_dir2], 
+                tokenizer, is_training=False, max_seq_length=args.max_seq_length)
 
     train_data = json.load(open(args.train_dir, 'r'))
     dev_examples = json.load(open(args.dev_dir1, 'r'))
@@ -136,17 +137,6 @@ if __name__ == '__main__':
     if mpi_rank == 0:
         if os.path.exists(args.log_file):
             os.remove(args.log_file)
-
-    # split_data for multi_gpu
-    if n_gpu > 1:
-        np.random.seed(np.sum(args.seed))
-        np.random.shuffle(train_data)
-        data_split_start = int(len(train_data) * (mpi_rank / mpi_size))
-        data_split_end = int(len(train_data) * ((mpi_rank + 1) / mpi_size))
-        train_data = train_data[data_split_start:data_split_end]
-        args.n_batch = args.n_batch // n_gpu
-        print('#### Hvd rank', mpi_rank, 'train from', data_split_start,
-              'to', data_split_end, 'Data length', len(train_data))
 
     steps_per_epoch = len(train_data) // args.n_batch
     eval_steps = int(steps_per_epoch * args.eval_epochs)
