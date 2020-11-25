@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     tf.logging.set_verbosity(tf.logging.ERROR)
 
-    parser.add_argument('--model', type=str, default='') # albert, albert_zh, albert_google
+    parser.add_argument('--model', type=str, default='') # albert, albert_zh, albert_google, bert_google
     parser.add_argument('--gpu_ids', type=str, default='0')
 
     # training parameter
@@ -106,9 +106,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args.float16)
     # 设置模型相关参数，如果未设置的话
-    if args.model == 'albert_zh':
-        from models.albert_zh_modeling import AlbertModelMRC
-        from models.albert_zh_modeling import BertConfig as AlbertConfig
+    if args.model == 'albert_zh': # brightmart的 ALBERT
+        from models.albert_zh_modeling import AlbertModelMRC, BertConfig as AlbertConfig
         #model_name = 'albert_tiny_489k'
         #model_name = 'albert_base_zh_36k'
         model_name = 'albert_large_zh'
@@ -116,16 +115,23 @@ if __name__ == '__main__':
         args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab.txt'
         args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config_large.json'
         args.init_restore_dir = args.init_restore_dir if args.init_restore_dir else model_path+'albert_model.ckpt'
-    elif args.model in ['albert', 'albert_google']:
-        if args.model == 'albert':  
-            from models.albert_modeling import AlbertModelMRC, AlbertConfig
-        else:
-            from models.albert_google_modeling import AlbertModelMRC, AlbertConfig    
+    elif args.model in ['albert', 'albert_google']:  # GOOGLE BERT
+        if args.model == 'albert':  # 手动 混合精度 的实现
+            from models.albert_modeling import AlbertModelMRC, AlbertConfig  
+        else: # google官方模型
+            from models.albert_google_modeling import AlbertModelMRC, AlbertConfig  
         model_name = 'albert_zh_base'
         model_path = '../nlp_model/%s/'%model_name
         args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab_chinese.txt'
         args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config.json'
         args.init_restore_dir = args.init_restore_dir if args.init_restore_dir else model_path+'model.ckpt-best'
+    elif args.model == 'bert_google': # GOOGLE BERT
+        from models.bert_google_modeling import BertModelMRC as AlbertModelMRC, BertConfig as AlbertConfig
+        model_name = 'chinese_bert_L-12_H-768_A-12'
+        model_path = '../nlp_model/%s/'%model_name
+        args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab.txt'
+        args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'bert_config.json'
+        args.init_restore_dir = args.init_restore_dir if args.init_restore_dir else model_path+'bert_model.ckpt'
     else:
         print("UNKNOWN model name: [", args.model, "]. Available mode: ablert, albert_zh, albert_google.")
         sys.exit(0)
