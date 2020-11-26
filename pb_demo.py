@@ -1,5 +1,6 @@
 # coding=utf-8
 
+from datetime import datetime
 import numpy as np
 import tensorflow as tf
 import tokenizations.official_tokenization as tokenization
@@ -103,11 +104,13 @@ with tf.Session(graph=p_graph) as sess:
             #print(segment_ids_)
             #print(input_mask_)
 
+            start_time = datetime.now()
             start_logits_, end_logits_ = sess.run([start_logits, end_logits], feed_dict={input_ids: input_ids_,
                                                                                          segment_ids: segment_ids_,
                                                                                          input_mask: input_mask_})
             st = np.argmax(start_logits_[0, :])
             ed = np.argmax(end_logits_[0, :])
+            print('[Time taken: {!s}]'.format(datetime.now() - start_time))
             print(st, ed)
 
             '''

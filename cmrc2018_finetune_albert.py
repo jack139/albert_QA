@@ -91,8 +91,8 @@ if __name__ == '__main__':
     parser.add_argument('--train_dir', type=str, default='outputs/cmrc2018/data/train_features_albert.json')
     parser.add_argument('--dev_dir1', type=str, default='outputs/cmrc2018/data/dev_examples_albert.json')
     parser.add_argument('--dev_dir2', type=str, default='outputs/cmrc2018/data/dev_features_albert.json')
-    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json')
-    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_dev.json')
+    parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_train.json') # trian + dev
+    parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/cmrc2018_trial.json')
     #parser.add_argument('--train_file', type=str, default='../nlp_model/cmrc2018/test_train.json')
     #parser.add_argument('--dev_file', type=str, default='../nlp_model/cmrc2018/test_dev.json')
     parser.add_argument('--vocab_file', type=str, default='')
