@@ -10,7 +10,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 # ------- ablert_google base
 from models.albert_google_modeling import AlbertModelMRC, AlbertConfig
 config_json_path = '../nlp_model/albert_zh_base/albert_config.json'
-checkpoint_path = 'outputs/cmrc2018/albert_zh_base/epoch2_batch16_lr3e-05_warmup0.1_anslen50_tf/checkpoint_score_F1-86.195_EM-65.02.ckpt'
+#checkpoint_path = 'outputs/cmrc2018/albert_zh_base/epoch2_batch16_lr3e-05_warmup0.1_anslen50_tf/checkpoint_score_F1-86.195_EM-65.02.ckpt'
+checkpoint_path = 'outputs/cmrc2018/albert_zh_base/epoch3_batch32_lr3e-05_warmup0.1_anslen50_tf/checkpoint_score_F1-73.044_EM-36.028.ckpt'
 
 # ------- albert_zh large
 #from models.albert_zh_modeling import AlbertModelMRC, BertConfig as AlbertConfig
