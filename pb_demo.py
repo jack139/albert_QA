@@ -1,5 +1,5 @@
 # coding=utf-8
-
+import re
 from datetime import datetime
 import numpy as np
 import tensorflow as tf
@@ -42,6 +42,8 @@ corpus = [ # 至少要有3条
 这一分层结构常常使用贪心算法逐层构建而成，并从中选取有助于机器学习的更有效的特征。不少深度学习算法都以无监督\
 学习的形式出现，因而这些算法能被应用于其他算法无法企及的无标签数据，这一类数据比有标签数据更丰富，也更容易获\
 得。这一点也为深度学习赢得了重要的优势。",
+    "胡夫金字塔（阿拉伯语：هرم أكبر‎，希腊语：Πυραμίδες της Γκίζα，英文：Pyramid of Khufu）又称吉\
+萨大金字塔，是位于埃及吉萨三座著名的金字塔中最为古老也是最大的一座。同时也是古代世界七大奇跡唯一尚存的建筑物",
 ]
 
 questions = [
@@ -50,8 +52,14 @@ questions = [
     "易惠科技有哪几家分公司？",
     "什么是深度学习？",
     "深度学习的优点是什么？",
+    "胡夫金字塔你是谁？",
     "你是谁？"
 ]
+
+# 清除文本中非中文非英文的字符（例如：日文、阿拉伯文） --- 中文模型的albert里没有这些token, 会导致go调用模型时内存溢出
+def cleantxt(raw):
+    fil = re.compile(u'[^0-9a-zA-Z\u4e00-\u9fa5.，,。？?“”"()（）$￥%!！:：、/|]+', re.UNICODE)
+    return fil.sub(' ', raw) 
 
 # 装入Albert模型标签
 tokenizer = tokenization.BertTokenizer(vocab_file='../nlp_model/albert_zh_base/vocab_chinese.txt',
@@ -66,6 +74,9 @@ with tf.Session(graph=p_graph) as sess:
     for question in questions:
 
         print('\n################## ')
+
+        question = cleantxt(question)
+
         # BM25 获取相关文本
         max_index = corpus_rank.get_document(question)
 
@@ -77,7 +88,7 @@ with tf.Session(graph=p_graph) as sess:
                 break
 
             print(index)
-            context = corpus[index]
+            context = cleantxt(corpus[index])
 
             context = context.replace('”', '"').replace('“', '"')
             question = question.replace('”', '"').replace('“', '"')
@@ -113,7 +124,7 @@ with tf.Session(graph=p_graph) as sess:
             print('[Time taken: {!s}]'.format(datetime.now() - start_time))
             print(st, ed)
 
-            '''
+
             # 判断一个unicode是否是英文字母
             def is_alphabet(uchar):
                 if (uchar >= u'\u0041' and uchar <= u'\u005a') or (uchar >= u'\u0061' and uchar <= u'\u007a'):
@@ -122,9 +133,9 @@ with tf.Session(graph=p_graph) as sess:
                     return False
             # 处理token中的英文，例如： 'di', '##st', '##ri', '##bu', '##ted', 're', '##pr', '##ese', '##nt', '##ation',
             ans = "".join([i[2:] if i.startswith('##') else (' '+i if is_alphabet(i[0]) else i)  for i in input_tokens[st:ed + 1]])
-            '''
+
             # 不处理：
-            ans = "".join(input_tokens[st:ed + 1])  
+            #ans = "".join(input_tokens[st:ed + 1])  
 
             if not ans.startswith('[CLS]'): # 找到答案
                 print('Question: ', question)

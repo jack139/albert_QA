@@ -2,7 +2,7 @@
 
 import codecs
 import jieba.posseg as pseg
-from rank_bm25 import BM25Okapi as BM25
+from rank_bm25 import BM25L as BM25
 
 # 构建停用词表
 stopwords = codecs.open('preprocess/cn_stopwords.txt','r',encoding='utf8').readlines()
