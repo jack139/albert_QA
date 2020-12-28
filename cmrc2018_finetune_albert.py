@@ -25,6 +25,10 @@ import collections
 from tokenizations.official_tokenization import BertTokenizer
 from preprocess.cmrc2018_preprocess import json2features
 
+import memory_saving_gradients
+# monkey patch tf.gradients to point to our custom version, with automatic checkpoint selection
+tf.__dict__["gradients"] = memory_saving_gradients.gradients_speed
+
 
 def print_rank0(*args):
     if mpi_rank == 0:
