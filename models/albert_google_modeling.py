@@ -1044,53 +1044,59 @@ def attention_ffn_block(layer_input,
   Returns:
     layer output
   """
+  def _x(layer_input):
+    with tf.variable_scope("attention_1", reuse=tf.AUTO_REUSE):
+      with tf.variable_scope("self"):
+        attention_output = attention_layer(
+            from_tensor=layer_input,
+            to_tensor=layer_input,
+            attention_mask=attention_mask,
+            num_attention_heads=num_attention_heads,
+            attention_probs_dropout_prob=attention_probs_dropout_prob,
+            initializer_range=initializer_range,
+            use_einsum=use_einsum)
 
-  with tf.variable_scope("attention_1"):
-    with tf.variable_scope("self"):
-      attention_output = attention_layer(
-          from_tensor=layer_input,
-          to_tensor=layer_input,
-          attention_mask=attention_mask,
-          num_attention_heads=num_attention_heads,
-          attention_probs_dropout_prob=attention_probs_dropout_prob,
-          initializer_range=initializer_range,
-          use_einsum=use_einsum)
-
-    # Run a linear projection of `hidden_size` then add a residual
-    # with `layer_input`.
-    with tf.variable_scope("output"):
-      attention_output = dense_layer_3d_proj(
-          attention_output,
-          hidden_size,
-          attention_head_size,
-          create_initializer(initializer_range),
-          None,
-          use_einsum=use_einsum,
-          name="dense")
-      attention_output = dropout(attention_output, hidden_dropout_prob)
-  attention_output = layer_norm(attention_output + layer_input)
-  with tf.variable_scope("ffn_1"):
-    with tf.variable_scope("intermediate"):
-      intermediate_output = dense_layer_2d(
-          attention_output,
-          intermediate_size,
-          create_initializer(initializer_range),
-          intermediate_act_fn,
-          use_einsum=use_einsum,
-          num_attention_heads=num_attention_heads,
-          name="dense")
+      # Run a linear projection of `hidden_size` then add a residual
+      # with `layer_input`.
       with tf.variable_scope("output"):
-        ffn_output = dense_layer_2d(
-            intermediate_output,
+        attention_output = dense_layer_3d_proj(
+            attention_output,
             hidden_size,
+            attention_head_size,
             create_initializer(initializer_range),
             None,
             use_einsum=use_einsum,
+            name="dense")
+        attention_output = dropout(attention_output, hidden_dropout_prob)
+    attention_output = layer_norm(attention_output + layer_input)
+    with tf.variable_scope("ffn_1", reuse=tf.AUTO_REUSE):
+      with tf.variable_scope("intermediate"):
+        intermediate_output = dense_layer_2d(
+            attention_output,
+            intermediate_size,
+            create_initializer(initializer_range),
+            intermediate_act_fn,
+            use_einsum=use_einsum,
             num_attention_heads=num_attention_heads,
             name="dense")
-      ffn_output = dropout(ffn_output, hidden_dropout_prob)
-  ffn_output = layer_norm(ffn_output + attention_output)
-  return ffn_output
+        with tf.variable_scope("output"):
+          ffn_output = dense_layer_2d(
+              intermediate_output,
+              hidden_size,
+              create_initializer(initializer_range),
+              None,
+              use_einsum=use_einsum,
+              num_attention_heads=num_attention_heads,
+              name="dense")
+        ffn_output = dropout(ffn_output, hidden_dropout_prob)
+    ffn_output = layer_norm(ffn_output + attention_output)
+    return ffn_output
+
+  # recompute
+  print("---------------- recompute 2--------------------------")
+  #tf.enable_resource_variables()
+  _x = tf.recompute_grad(_x)
+  return _x(layer_input)
 
 
 def transformer_model(input_tensor,
