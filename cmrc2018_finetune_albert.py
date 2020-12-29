@@ -6,6 +6,18 @@ import os
 #               issue-about-no-suitable-gpus-detected-when-using-mixed-precision-graph-optimizer/
 os.environ['TF_AUTO_MIXED_PRECISION_GRAPH_REWRITE_IGNORE_PERFORMANCE'] = '1'
 
+
+# 替换 gradients.gradients 用于 recompute
+# https://github.com/tensorpack/tensorpack/issues/654
+# https://github.com/cybertronai/gradient-checkpointing/issues/4
+import memory_saving_gradients
+from tensorflow.python.ops import gradients
+# monkey patch tf.gradients to point to our custom version, with automatic checkpoint selection
+def gradients_memory(ys, xs, grad_ys=None, **kwargs):
+    return memory_saving_gradients.gradients(ys, xs, grad_ys, checkpoints='collection', **kwargs)
+gradients.__dict__["gradients"] = gradients_memory
+
+
 import argparse
 import numpy as np
 import tensorflow as tf
@@ -24,10 +36,6 @@ from tqdm import tqdm
 import collections
 from tokenizations.official_tokenization import BertTokenizer
 from preprocess.cmrc2018_preprocess import json2features
-
-import memory_saving_gradients
-# monkey patch tf.gradients to point to our custom version, with automatic checkpoint selection
-tf.__dict__["gradients"] = memory_saving_gradients.gradients_speed
 
 
 def print_rank0(*args):

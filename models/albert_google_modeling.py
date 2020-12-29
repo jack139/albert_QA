@@ -1069,6 +1069,10 @@ def attention_ffn_block(layer_input,
           name="dense")
       attention_output = dropout(attention_output, hidden_dropout_prob)
   attention_output = layer_norm(attention_output + layer_input)
+
+  # 加入 checkpoints, 用于 recompute
+  tf.add_to_collection('checkpoints', attention_output)
+
   with tf.variable_scope("ffn_1"):
     with tf.variable_scope("intermediate"):
       intermediate_output = dense_layer_2d(
@@ -1090,6 +1094,10 @@ def attention_ffn_block(layer_input,
             name="dense")
       ffn_output = dropout(ffn_output, hidden_dropout_prob)
   ffn_output = layer_norm(ffn_output + attention_output)
+
+  # 加入 checkpoints, 用于 recompute
+  tf.add_to_collection('checkpoints', ffn_output)
+
   return ffn_output
 
 

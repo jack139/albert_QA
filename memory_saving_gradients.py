@@ -167,6 +167,7 @@ def gradients(ys, xs, grad_ys=None, checkpoints='collection', **kwargs):
         else:
             raise Exception('%s is unsupported input for "checkpoints"' % (checkpoints,))
 
+    print("checkpoints = ", len(checkpoints))
     checkpoints = list(set(checkpoints).intersection(ts_all))
 
     # at this point automatic selection happened and checkpoints is list of nodes
