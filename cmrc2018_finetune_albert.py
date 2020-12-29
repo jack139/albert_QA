@@ -82,14 +82,14 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_ids', type=str, default='0')
 
     # training parameter
-    parser.add_argument('--train_epochs', type=int, default=2)
+    parser.add_argument('--train_epochs', type=int, default=3)
     parser.add_argument('--n_batch', type=int, default=32)
     parser.add_argument('--lr', type=float, default=3e-5)
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--clip_norm', type=float, default=1.0)
     parser.add_argument('--warmup_rate', type=float, default=0.1)
     parser.add_argument('--loss_count', type=int, default=1000)
-    parser.add_argument('--seed', type=list, default=[123])
+    parser.add_argument('--seed', type=list, default=[123,456,789])
     parser.add_argument('--float16', type=str2bool, nargs='?', const=True, default='True')  # only sm >= 7.0 (tensorcores)
     parser.add_argument('--max_ans_length', type=int, default=50)
     parser.add_argument('--log_interval', type=int, default=30)  # show the average loss per 30 steps args.
