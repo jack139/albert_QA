@@ -1095,9 +1095,6 @@ def attention_ffn_block(layer_input,
       ffn_output = dropout(ffn_output, hidden_dropout_prob)
   ffn_output = layer_norm(ffn_output + attention_output)
 
-  # 加入 checkpoints, 用于 recompute
-  #tf.add_to_collection('checkpoints', ffn_output)
-
   return ffn_output
 
 

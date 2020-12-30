@@ -10,6 +10,9 @@ os.environ['TF_AUTO_MIXED_PRECISION_GRAPH_REWRITE_IGNORE_PERFORMANCE'] = '1'
 # 替换 gradients.gradients 用于 recompute
 # https://github.com/tensorpack/tensorpack/issues/654
 # https://github.com/cybertronai/gradient-checkpointing/issues/4
+#     model      8G-GPU    16G-GPU
+# albert_google  72        136
+# bert_google    40        96
 import memory_saving_gradients
 from tensorflow.python.ops import gradients
 # monkey patch tf.gradients to point to our custom version, with automatic checkpoint selection

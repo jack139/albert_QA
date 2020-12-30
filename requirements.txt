@@ -1,3 +1,4 @@
 tensorflow==1.15.4
 nltk
 rank_bm25
+toposort
