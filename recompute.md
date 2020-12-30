@@ -16,7 +16,7 @@
     https://github.com/cybertronai/gradient-checkpointing/
 
 2. 替换梯度计算
-  原开源实现通过替换```tf.gradients```实现重计算过程，因为我们使用```tf.train.Optimizer```进行梯度计算，而```tf.train.Optimizer```在内部条用了```tf.gradients```的一个别名```gradients.gradients```，因此做如下替换：
+    原开源实现通过替换```tf.gradients```实现重计算过程，因为我们使用```tf.train.Optimizer```进行梯度计算，而```tf.train.Optimizer```在内部条用了```tf.gradients```的一个别名```gradients.gradients```，因此做如下替换：
 ```python
 import memory_saving_gradients
 from tensorflow.python.ops import gradients
@@ -47,3 +47,8 @@ tf.add_to_collection('checkpoints', attention_output)
 | 未使用重计算              | 16             | 32             |
 | 使用重计算                | 72             | 136            |
 
+
+
+### 代码工程
+
+https://gitlab.ylzpay.com/guantao/albert_qa
