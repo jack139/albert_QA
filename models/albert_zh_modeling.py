@@ -1023,6 +1023,9 @@ def transformer_model(input_tensor,
           attention_output = dropout(attention_output, hidden_dropout_prob)
           attention_output = layer_norm(attention_output + layer_input)
 
+        # 加入 checkpoints, 用于 recompute
+        tf.add_to_collection('checkpoints', attention_output)
+
       # The activation is only applied to the "intermediate" hidden layer.
       with tf.variable_scope("intermediate"):
         intermediate_output = tf.layers.dense(
