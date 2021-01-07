@@ -123,12 +123,12 @@ if __name__ == '__main__':
     # 设置模型相关参数，如果未设置的话
     if args.model == 'albert_zh': # brightmart的 ALBERT
         from models.albert_zh_modeling import AlbertModelMRC, BertConfig as AlbertConfig
-        #model_name = 'albert_tiny_489k'
+        model_name = 'albert_tiny_489k'
         #model_name = 'albert_base_zh_36k'
-        model_name = 'albert_large_zh'
+        #model_name = 'albert_large_zh'
         model_path = '../nlp_model/%s/'%model_name
         args.vocab_file = args.vocab_file if args.vocab_file else model_path+'vocab.txt'
-        args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config_large.json'
+        args.bert_config_file = args.bert_config_file if args.bert_config_file else model_path+'albert_config_tiny.json'
         args.init_restore_dir = args.init_restore_dir if args.init_restore_dir else model_path+'albert_model.ckpt'
     elif args.model in ['albert', 'albert_google']:  # GOOGLE BERT
         if args.model == 'albert':  # 手动 混合精度 的实现
