@@ -147,9 +147,9 @@ def extract_answer(question, context, max_a_len=16):
     """抽取答案函数
     """
     max_q_len = 64
-    q_token_ids = tokenizer.encode(question, max_length=max_q_len)[0]
+    q_token_ids = tokenizer.encode(question, maxlen=max_q_len)[0]
     c_token_ids = tokenizer.encode(
-        context, max_length=maxlen - len(q_token_ids) + 1
+        context, maxlen=maxlen - len(q_token_ids) + 1
     )[0]
     token_ids = q_token_ids + c_token_ids[1:]
     segment_ids = [0] * len(q_token_ids) + [1] * (len(c_token_ids) - 1)
@@ -184,11 +184,11 @@ def predict_to_file(infile, out_file):
 def evaluate(filename):
     """评测函数（官方提供评测脚本evaluate.py）
     """
-    predict_to_file(filename, filename + '.pred.json')
+    predict_to_file(filename, 'evaluate.pred.json')
     metrics = json.loads(
         os.popen(
-            'python ../nlp_model/dureader_robust-data/evaluate.py %s %s'
-            % (filename, filename + '.pred.json')
+            'python3 ../nlp_model/dureader_robust-data/evaluate.py %s %s'
+            % (filename, 'evaluate.pred.json')
         ).read().strip()
     )
     return metrics
@@ -204,8 +204,8 @@ class Evaluator(keras.callbacks.Callback):
         metrics = evaluate(
             '../nlp_model/dureader_robust-data/dev.json'
         )
-        if metrics['F1'] >= self.best_val_f1:
-            self.best_val_f1 = metrics['F1']
+        if float(metrics['F1']) >= self.best_val_f1:
+            self.best_val_f1 = float(metrics['F1'])
             model.save_weights('best_model.weights')
         metrics['BEST F1'] = self.best_val_f1
         print(metrics)
@@ -224,6 +224,5 @@ if __name__ == '__main__':
     )
 
 else:
-
     model.load_weights('best_model.weights')
     # predict_to_file('../nlp_model/dureader_robust-test1/test1.json', 'rc_pred.json')
